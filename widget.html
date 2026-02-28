@@ -158,9 +158,9 @@
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .phone-row { display: flex; gap: 8px; }
   .phone-row select {
-    width: 100px; flex-shrink: 0; padding: 9px 6px; background: var(--card-light);
+    width: 78px; flex-shrink: 0; padding: 9px 4px; background: var(--card-light);
     border: 1px solid var(--border); border-radius: 8px; color: var(--text);
-    font-family: 'Inter', sans-serif; font-size: 0.78rem;
+    font-family: 'Inter', sans-serif; font-size: 0.75rem;
     transition: border-color 0.3s ease, box-shadow 0.3s ease; outline: none;
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a0a0b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
@@ -248,7 +248,7 @@
   }
 
   /* ===== SEAT MAP ===== */
-  .seat-map-container { flex: 1; display: flex; flex-direction: column; width: 100%; }
+  .seat-map-container { flex: none; display: flex; flex-direction: column; width: 100%; }
   .seat-map-legend {
     display: flex; gap: 8px; justify-content: center; margin-bottom: 6px; flex-wrap: wrap;
   }
@@ -421,7 +421,7 @@
     .form-group input, .form-group select, .form-group textarea {
       padding: 9px 12px; font-size: 0.85rem; min-height: 36px;
     }
-    .phone-row select { min-height: 36px; }
+    .phone-row select { min-height: 36px; width: 74px; font-size: 0.73rem; }
     .event-card { padding: 8px 6px; min-height: 50px; }
     .restaurant-card { padding: 8px; min-height: 50px; }
 
@@ -441,7 +441,7 @@
     .step { padding: 8px; }
     .step-header h2 { font-size: 1rem; }
     .btn { font-size: 0.82rem; padding: 9px 16px; }
-    .phone-row select { width: 85px; font-size: 0.75rem; }
+    .phone-row select { width: 70px; font-size: 0.72rem; padding-left: 2px; }
     .condition-text h4 { font-size: 0.72rem; }
     .condition-text p { font-size: 0.65rem; }
   }
