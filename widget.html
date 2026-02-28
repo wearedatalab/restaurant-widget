@@ -50,6 +50,9 @@
     padding: 12px;
     overflow: hidden;
   }
+  .step-body {
+    flex: 1; overflow-y: auto; min-height: 0; padding-bottom: 4px;
+  }
   .step.active { display: flex; flex-direction: column; }
   .step.visible { opacity: 1; transform: translateX(0); }
 
@@ -318,6 +321,18 @@
     box-shadow: 0 0 8px rgba(201,168,76,0.4);
   }
   .table-card.selected .table-card-check svg { opacity: 1; }
+  @keyframes cardSelect {
+    0% { transform: scale(1); }
+    40% { transform: scale(0.97); }
+    100% { transform: scale(1); }
+  }
+  @keyframes cardDeselect {
+    0% { transform: scale(1); box-shadow: 0 0 16px rgba(201,168,76,0.4); }
+    50% { transform: scale(0.96); box-shadow: none; }
+    100% { transform: scale(1); box-shadow: none; }
+  }
+  .table-card.anim-select { animation: cardSelect 0.3s ease; }
+  .table-card.anim-deselect { animation: cardDeselect 0.35s ease; }
   .no-tables-msg {
     text-align: center; color: var(--text-muted); font-size: 0.78rem;
     padding: 20px; display: none;
@@ -472,6 +487,7 @@
       <p>Selecciona la sede donde deseas reservar</p>
     </div>
 
+    <div class="step-body">
     <div class="restaurant-cards" id="restaurantCards">
       <div class="restaurant-card" data-restaurant="norte" onclick="selectRestaurant(this)">
         <img class="restaurant-card-img" src="https://images.unsplash.com/photo-1552566626-52f8b828add9?w=200&q=80" alt="Sede Norte"
@@ -512,6 +528,7 @@
         </div>
       </div>
     </div>
+    </div><!-- /step-body -->
 
     <div class="btn-group">
       <button class="btn btn-primary btn-full disabled" id="restaurantBtn" onclick="validateStep2()">Continuar</button>
@@ -526,6 +543,7 @@
       <h2>Datos de Contacto</h2>
       <p>Necesitamos algunos datos para confirmar tu reserva</p>
     </div>
+    <div class="step-body">
     <div class="form-group">
       <label>Nombre completo</label>
       <input type="text" id="fullName" placeholder="Ej: Juan Perez">
@@ -579,6 +597,7 @@
         <span class="form-error">Selecciona</span>
       </div>
     </div>
+    </div><!-- /step-body -->
     <div class="btn-group">
       <button class="btn btn-primary btn-full" onclick="validateStep3()">Continuar</button>
     </div>
@@ -593,6 +612,7 @@
       <p>Selecciona el tipo de evento y la fecha</p>
     </div>
 
+    <div class="step-body">
     <label style="font-size:0.7rem;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;display:block;">Tipo de evento</label>
     <div class="event-cards" id="eventCards">
       <div class="event-card" data-event="casual" onclick="selectEvent(this)">
@@ -633,6 +653,7 @@
       <label>Comentarios adicionales</label>
       <textarea id="comments" placeholder="Alergias, preferencias, peticiones especiales..."></textarea>
     </div>
+    </div><!-- /step-body -->
 
     <div class="btn-group">
       <button class="btn btn-primary btn-full" onclick="validateStep4()">Continuar</button>
@@ -648,6 +669,7 @@
       <p>Por favor revisa las siguientes condiciones</p>
     </div>
 
+    <div class="step-body">
     <div class="conditions-card">
       <div class="condition-item">
         <div class="condition-icon">⏰</div>
@@ -678,6 +700,7 @@
         </div>
       </div>
     </div>
+    </div><!-- /step-body -->
 
     <div class="btn-group">
       <button class="btn btn-primary btn-full" onclick="goToStep(6)">Acepto, seleccionar mesa</button>
@@ -1097,11 +1120,26 @@
   function selectTableCard(el) {
     if (el.classList.contains('unavailable')) return;
 
+    // Remove previous animations
+    document.querySelectorAll('.table-card').forEach(c => c.classList.remove('anim-select', 'anim-deselect'));
+
+    // Toggle: if already selected, deselect it
+    if (el.classList.contains('selected')) {
+      el.classList.remove('selected');
+      el.classList.add('anim-deselect');
+      selectedSeatId = null;
+      document.getElementById('confirmSeatBtn').classList.add('disabled');
+      return;
+    }
+
     // Deselect previous
-    document.querySelectorAll('.table-card.selected').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.table-card.selected').forEach(c => {
+      c.classList.remove('selected');
+      c.classList.add('anim-deselect');
+    });
 
     // Select this one
-    el.classList.add('selected');
+    el.classList.add('selected', 'anim-select');
     selectedSeatId = el.dataset.table;
 
     document.getElementById('confirmSeatBtn').classList.remove('disabled');
