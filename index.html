@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo - Widget de Reservas</title>
+<style>
+  body {
+    font-family: system-ui, sans-serif;
+    background: #f5f5f5;
+    margin: 0;
+    padding: 40px 20px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  p.subtitle {
+    text-align: center;
+    color: #777;
+    margin-bottom: 40px;
+  }
+
+  .demo-section {
+    margin-bottom: 60px;
+  }
+
+  .section-title {
+    text-align: center;
+    color: #555;
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .section-desc {
+    text-align: center;
+    color: #999;
+    font-size: 0.82rem;
+    margin-bottom: 20px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* VERTICAL EMBED */
+  .widget-frame-vertical {
+    max-width: 480px;
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  }
+
+  .widget-frame-vertical iframe {
+    width: 100%;
+    height: 700px;
+    border: none;
+    display: block;
+  }
+
+  /* HORIZONTAL EMBED */
+  .widget-frame-horizontal {
+    max-width: 960px;
+    margin: 0 auto;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  }
+
+  .widget-frame-horizontal iframe {
+    width: 100%;
+    height: 1100px;
+    border: none;
+    display: block;
+  }
+
+  /* EMBED CODES */
+  .embed-code {
+    max-width: 700px;
+    margin: 24px auto 0;
+    background: #1a1a2e;
+    color: #c9a84c;
+    border-radius: 12px;
+    padding: 20px;
+    font-family: monospace;
+    font-size: 0.82rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .embed-code .tag { color: #ef5350; }
+  .embed-code .attr { color: #81d4fa; }
+  .embed-code .val { color: #a5d6a7; }
+  .embed-code .comment { color: #666; }
+
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .tab {
+    padding: 10px 24px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+    transition: all 0.2s ease;
+  }
+
+  .tab:hover { border-color: #c9a84c; color: #333; }
+  .tab.active { border-color: #c9a84c; background: #c9a84c; color: #1a1a2e; }
+
+  .demo-panel { display: none; }
+  .demo-panel.active { display: block; }
+</style>
+</head>
+<body>
+
+<h1>Widget de Reservas</h1>
+<p class="subtitle">Incrusta el widget en tu sitio web en formato vertical u horizontal</p>
+
+<div class="tabs">
+  <button class="tab active" onclick="showPanel('vertical')">Vertical</button>
+  <button class="tab" onclick="showPanel('horizontal')">Horizontal</button>
+</div>
+
+<!-- ===== VERTICAL ===== -->
+<div class="demo-panel active" id="panel-vertical">
+  <p class="section-desc">Ideal para barras laterales, columnas angostas o pop-ups. Max 480px de ancho.</p>
+
+  <div class="widget-frame-vertical">
+    <iframe src="widget.html" title="Reserva tu mesa"></iframe>
+  </div>
+
+  <p class="section-title" style="margin-top:30px;">Codigo para incrustar (Vertical)</p>
+  <div class="embed-code"><span class="comment">&lt;!-- Widget Vertical (sidebar, columna, pop-up) --&gt;</span>
+&lt;<span class="tag">iframe</span>
+  <span class="attr">src</span>=<span class="val">"https://tu-dominio.com/widget.html"</span>
+  <span class="attr">width</span>=<span class="val">"100%"</span>
+  <span class="attr">height</span>=<span class="val">"700"</span>
+  <span class="attr">style</span>=<span class="val">"border:none; max-width:480px; border-radius:16px;"</span>
+  <span class="attr">title</span>=<span class="val">"Reserva tu mesa"</span>
+&gt;&lt;/<span class="tag">iframe</span>&gt;</div>
+</div>
+
+<!-- ===== HORIZONTAL ===== -->
+<div class="demo-panel" id="panel-horizontal">
+  <p class="section-desc">Ideal para secciones anchas, banners, hero sections o paginas completas. Se adapta hasta 960px.</p>
+
+  <div class="widget-frame-horizontal">
+    <iframe src="widget.html" title="Reserva tu mesa"></iframe>
+  </div>
+
+  <p class="section-title" style="margin-top:30px;">Codigo para incrustar (Horizontal)</p>
+  <div class="embed-code"><span class="comment">&lt;!-- Widget Horizontal (seccion ancha, hero, pagina completa) --&gt;</span>
+&lt;<span class="tag">iframe</span>
+  <span class="attr">src</span>=<span class="val">"https://tu-dominio.com/widget.html"</span>
+  <span class="attr">width</span>=<span class="val">"100%"</span>
+  <span class="attr">height</span>=<span class="val">"1100"</span>
+  <span class="attr">style</span>=<span class="val">"border:none; max-width:960px; border-radius:16px;"</span>
+  <span class="attr">title</span>=<span class="val">"Reserva tu mesa"</span>
+&gt;&lt;/<span class="tag">iframe</span>&gt;</div>
+</div>
+
+<script>
+function showPanel(type) {
+  document.querySelectorAll('.demo-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + type).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>

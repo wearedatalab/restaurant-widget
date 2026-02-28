@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reserva tu Mesa</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #1a1a2e;
+    --accent: #c9a84c;
+    --accent-hover: #b8933a;
+    --bg: #0f0f1a;
+    --card: #1a1a2e;
+    --card-light: #252542;
+    --text: #f0ece2;
+    --text-muted: #a0a0b8;
+    --success: #4caf50;
+    --danger: #ef5350;
+    --border: rgba(201, 168, 76, 0.2);
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .widget-container {
+    max-width: 100%;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* ===== STEP TRANSITIONS ===== */
+  .step {
+    display: none;
+    opacity: 0;
+    transform: translateX(30px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .step.active { display: flex; flex-direction: column; }
+  .step.visible { opacity: 1; transform: translateX(0); }
+
+  /* ===== PROGRESS BAR ===== */
+  .progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 16px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: linear-gradient(to bottom, var(--bg) 60%, transparent);
+  }
+  .progress-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--card-light); border: 2px solid var(--border);
+    transition: all 0.3s ease;
+  }
+  .progress-dot.completed { background: var(--accent); border-color: var(--accent); }
+  .progress-dot.current {
+    background: transparent; border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(201,168,76,0.5);
+    width: 12px; height: 12px;
+  }
+  .progress-line { width: 18px; height: 2px; background: var(--card-light); transition: background 0.3s ease; }
+  .progress-line.completed { background: var(--accent); }
+
+  /* ===== STEP 1: LANDING ===== */
+  .landing {
+    justify-content: center; align-items: center;
+    text-align: center; padding: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.1), var(--bg));
+  }
+  .landing-image-wrapper {
+    width: 100%; height: 55vh;
+    position: relative; overflow: hidden;
+  }
+  .landing-image-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+  .landing-overlay {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 40%;
+    background: linear-gradient(to bottom, transparent, var(--bg));
+  }
+  .landing-content {
+    padding: 20px 24px 30px; flex: 1;
+    display: flex; flex-direction: column; justify-content: center; gap: 14px;
+  }
+  .landing-content h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem; font-weight: 700; line-height: 1.2;
+  }
+  .landing-content h1 span { color: var(--accent); }
+  .landing-content p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 16px 32px; border: none; border-radius: 12px;
+    font-family: 'Inter', sans-serif; font-size: 1rem; font-weight: 600;
+    cursor: pointer; transition: all 0.3s ease; text-decoration: none;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+    color: var(--primary); box-shadow: 0 4px 20px rgba(201,168,76,0.3);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(201,168,76,0.4); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary.disabled { opacity: 0.5; pointer-events: none; }
+  .btn-secondary {
+    background: var(--card-light); color: var(--text); border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--card); border-color: var(--accent); }
+  .btn-full { width: 100%; }
+  .btn-back {
+    background: none; border: none; color: var(--text-muted); font-size: 0.9rem;
+    cursor: pointer; padding: 8px; display: flex; align-items: center; gap: 4px;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-back:hover { color: var(--accent); }
+  .btn-group { display: flex; flex-direction: column; gap: 12px; margin-top: auto; padding-top: 20px; }
+
+  /* ===== FORMS ===== */
+  .step-header { margin-bottom: 24px; }
+  .step-header h2 { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 600; margin-bottom: 6px; }
+  .step-header p { color: var(--text-muted); font-size: 0.85rem; }
+  .form-group { margin-bottom: 18px; }
+  .form-group label {
+    display: block; font-size: 0.8rem; font-weight: 500; color: var(--text-muted);
+    margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 14px 16px; background: var(--card-light);
+    border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+    font-family: 'Inter', sans-serif; font-size: 0.95rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease; outline: none;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 3px rgba(201,168,76,0.15);
+  }
+  .form-group input::placeholder, .form-group textarea::placeholder { color: #555; }
+  .form-group textarea { resize: vertical; min-height: 90px; }
+  .form-group select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a0a0b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 16px center; padding-right: 40px;
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .phone-row { display: flex; gap: 8px; }
+  .phone-row select {
+    width: 110px; flex-shrink: 0; padding: 14px 8px; background: var(--card-light);
+    border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+    font-family: 'Inter', sans-serif; font-size: 0.85rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease; outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a0a0b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center; padding-right: 24px;
+  }
+  .phone-row select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
+  .phone-row input { flex: 1; min-width: 0; }
+  .form-error { color: var(--danger); font-size: 0.75rem; margin-top: 4px; display: none; }
+  .form-group.error input, .form-group.error select { border-color: var(--danger); }
+  .form-group.error .form-error { display: block; }
+
+  /* ===== RESTAURANT CARDS ===== */
+  .restaurant-cards {
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .restaurant-card {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--card-light); border: 2px solid var(--border);
+    border-radius: 14px; padding: 12px; cursor: pointer;
+    transition: all 0.3s ease; overflow: hidden;
+  }
+  .restaurant-card:hover { border-color: rgba(201,168,76,0.5); }
+  .restaurant-card.selected { border-color: var(--accent); background: rgba(201,168,76,0.08); }
+  .restaurant-card-img {
+    width: 72px; height: 72px; border-radius: 10px;
+    object-fit: cover; flex-shrink: 0;
+  }
+  .restaurant-card-info { flex: 1; min-width: 0; }
+  .restaurant-card-info h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 3px; }
+  .restaurant-card-info p { font-size: 0.78rem; color: var(--text-muted); line-height: 1.3; }
+  .restaurant-card-info .address { font-size: 0.72rem; color: var(--accent); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+  .restaurant-card-check {
+    width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+  }
+  .restaurant-card.selected .restaurant-card-check {
+    background: var(--accent); border-color: var(--accent);
+  }
+
+  /* ===== EVENT TYPE CARDS ===== */
+  .event-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .event-card {
+    background: var(--card-light); border: 2px solid var(--border); border-radius: 12px;
+    padding: 16px 12px; text-align: center; cursor: pointer; transition: all 0.3s ease;
+  }
+  .event-card:hover { border-color: rgba(201,168,76,0.5); }
+  .event-card.selected { border-color: var(--accent); background: rgba(201,168,76,0.1); }
+  .event-card .icon { font-size: 1.8rem; margin-bottom: 6px; display: block; }
+  .event-card .label { font-size: 0.8rem; font-weight: 500; color: var(--text-muted); }
+  .event-card.selected .label { color: var(--accent); }
+
+  /* ===== CONDITIONS SCREEN ===== */
+  .conditions-card {
+    background: var(--card-light); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px; margin-bottom: 16px;
+  }
+  .condition-item {
+    display: flex; gap: 14px; padding: 14px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .condition-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .condition-item:first-child { padding-top: 0; }
+  .condition-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(201,168,76,0.1); display: flex;
+    align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0;
+  }
+  .condition-text h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; }
+  .condition-text p { font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; }
+
+  .reservation-code-box {
+    text-align: center;
+    background: linear-gradient(135deg, rgba(201,168,76,0.15), rgba(201,168,76,0.05));
+    border: 1px dashed var(--accent); border-radius: 12px;
+    padding: 20px; margin-bottom: 16px;
+  }
+  .reservation-code-box span.label {
+    display: block; font-size: 0.75rem; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+  }
+  .reservation-code-box span.code {
+    display: block; font-family: 'Playfair Display', serif;
+    font-size: 1.8rem; font-weight: 700; color: var(--accent); letter-spacing: 3px;
+  }
+
+  /* ===== SEAT MAP ===== */
+  .seat-map-container { flex: 1; display: flex; flex-direction: column; width: 100%; }
+  .seat-map-legend {
+    display: flex; gap: 12px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--text-muted); }
+  .legend-dot { width: 14px; height: 14px; border-radius: 4px; }
+  .legend-dot.available { background: rgba(76,175,80,0.25); border: 2px solid #4caf50; }
+  .legend-dot.selected { background: var(--accent); }
+  .legend-dot.occupied { background: rgba(239,83,80,0.2); border: 2px solid rgba(239,83,80,0.4); }
+  .legend-dot.insufficient { background: rgba(255,152,0,0.15); border: 2px solid rgba(255,152,0,0.4); }
+
+  .floor-plan-wrapper {
+    width: 100%; background: var(--card); border-radius: 16px;
+    border: 1px solid var(--border);
+    position: relative; touch-action: pan-x pan-y;
+    padding: 10px;
+  }
+  .floor-plan-inner { width: 100%; position: relative; }
+  .floor-plan-svg { width: 100%; height: auto; display: block; }
+
+  /* TABLE STATES */
+  .table-group { cursor: pointer; transition: all 0.3s ease; }
+  .table-group:hover .table-shape { filter: brightness(1.3); }
+
+  /* Available table (enough seats) - green */
+  .table-group.t-available .table-shape {
+    fill: rgba(76,175,80,0.12); stroke: #4caf50; stroke-width: 2;
+  }
+  .table-group.t-available .chair-dot { fill: rgba(76,175,80,0.3); stroke: #4caf50; stroke-width: 1.5; }
+  .table-group.t-available .chair-dot.occ { fill: #333; stroke: #555; stroke-width: 1; }
+
+  /* Occupied table (no available seats) - red */
+  .table-group.t-occupied {
+    cursor: not-allowed; pointer-events: none; opacity: 0.5;
+  }
+  .table-group.t-occupied .table-shape {
+    fill: rgba(239,83,80,0.08); stroke: rgba(239,83,80,0.4); stroke-width: 1.5;
+  }
+  .table-group.t-occupied .chair-dot { fill: #333; stroke: #555; stroke-width: 1; }
+
+  /* Insufficient table (has seats but not enough) - orange */
+  .table-group.t-insufficient {
+    cursor: not-allowed; pointer-events: none; opacity: 0.55;
+  }
+  .table-group.t-insufficient .table-shape {
+    fill: rgba(255,152,0,0.08); stroke: rgba(255,152,0,0.35); stroke-width: 1.5;
+  }
+  .table-group.t-insufficient .chair-dot { fill: rgba(255,152,0,0.15); stroke: rgba(255,152,0,0.35); stroke-width: 1; }
+  .table-group.t-insufficient .chair-dot.occ { fill: #333; stroke: #555; stroke-width: 1; }
+
+  /* Selected table - golden glow */
+  .table-group.t-selected {
+    cursor: pointer; filter: drop-shadow(0 0 12px rgba(201,168,76,0.6));
+  }
+  .table-group.t-selected .table-shape {
+    fill: rgba(201,168,76,0.2); stroke: var(--accent); stroke-width: 2.5;
+  }
+  .table-group.t-selected .chair-dot { fill: var(--accent); stroke: var(--accent); stroke-width: 1.5; }
+  .table-group.t-selected .chair-dot.occ { fill: #555; stroke: #777; stroke-width: 1; }
+
+  @keyframes tablePulse {
+    0% { filter: drop-shadow(0 0 8px rgba(201,168,76,0.4)); }
+    50% { filter: drop-shadow(0 0 16px rgba(201,168,76,0.7)); }
+    100% { filter: drop-shadow(0 0 8px rgba(201,168,76,0.4)); }
+  }
+  .table-group.t-selected { animation: tablePulse 2s ease-in-out infinite; }
+
+  .table-shape { transition: all 0.3s ease; }
+  .chair-dot { transition: all 0.3s ease; }
+
+  .table-label {
+    fill: var(--text-muted); font-size: 9px; font-family: 'Inter', sans-serif;
+    font-weight: 500; text-anchor: middle; pointer-events: none;
+  }
+  .table-seats-label {
+    fill: var(--text-muted); font-size: 7px; font-family: 'Inter', sans-serif;
+    font-weight: 400; text-anchor: middle; pointer-events: none; opacity: 0.7;
+  }
+  .zone-label {
+    fill: rgba(201,168,76,0.3); font-size: 11px; font-family: 'Inter', sans-serif;
+    font-weight: 600; text-anchor: middle; text-transform: uppercase;
+    letter-spacing: 2px; pointer-events: none;
+  }
+
+  .selected-info {
+    background: var(--card-light); border-radius: 10px; padding: 12px 16px;
+    margin-top: 12px; display: flex; align-items: center;
+    justify-content: space-between; font-size: 0.85rem; min-height: 48px;
+  }
+  .selected-info .seat-name { color: var(--accent); font-weight: 600; }
+
+  /* ===== SUCCESS SCREEN ===== */
+  .success-screen { justify-content: center; align-items: center; text-align: center; }
+  .success-icon {
+    width: 100px; height: 100px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(76,175,80,0.2), rgba(76,175,80,0.05));
+    border: 2px solid var(--success); display: flex;
+    align-items: center; justify-content: center;
+    margin: 0 auto 24px; animation: scaleIn 0.5s ease;
+  }
+  .success-icon svg { width: 48px; height: 48px; stroke: var(--success); stroke-width: 2.5; fill: none; }
+  .checkmark-path { stroke-dasharray: 60; stroke-dashoffset: 60; animation: drawCheck 0.6s ease 0.3s forwards; }
+  @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+  @keyframes scaleIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .success-screen h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: 8px; }
+  .success-screen p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 6px; }
+  .success-details {
+    background: var(--card-light); border-radius: 14px; padding: 20px;
+    margin: 24px 0; text-align: left;
+  }
+  .success-detail-row {
+    display: flex; justify-content: space-between; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem;
+  }
+  .success-detail-row:last-child { border: none; }
+  .success-detail-row .detail-label { color: var(--text-muted); }
+  .success-detail-row .detail-value { font-weight: 500; color: var(--text); }
+
+  /* ===== RESPONSIVE: WIDE / HORIZONTAL EMBED (>640px) ===== */
+  @media (min-width: 641px) {
+    .step { padding: 28px 40px; min-height: auto; }
+    .step.landing { flex-direction: row; padding: 0; }
+    .landing-image-wrapper { width: 50%; height: 100vh; flex-shrink: 0; }
+    .landing-content { width: 50%; padding: 40px; justify-content: center; text-align: left; }
+    .landing-content h1 { font-size: 2.4rem; }
+    .landing-content p { font-size: 1rem; }
+    .landing-overlay { height: 0; display: none; }
+
+    .step-header h2 { font-size: 1.7rem; }
+    .form-group input, .form-group select, .form-group textarea { font-size: 1rem; padding: 16px 18px; }
+
+    .restaurant-cards { flex-direction: row; flex-wrap: wrap; }
+    .restaurant-card { flex: 1 1 calc(50% - 6px); min-width: 220px; }
+
+    .event-cards { grid-template-columns: repeat(4, 1fr); }
+
+    .floor-plan-wrapper { overflow: visible; }
+
+    .seat-map-container { max-width: 540px; margin: 0 auto; }
+    .success-details { max-width: 480px; margin: 24px auto; }
+    .reservation-code-box { max-width: 360px; margin: 20px auto 16px; }
+
+    .form-row { grid-template-columns: 1fr 1fr; gap: 16px; }
+  }
+
+  /* ===== RESPONSIVE: EXTRA WIDE (>900px) ===== */
+  @media (min-width: 901px) {
+    .step:not(.landing):not(.success-screen) {
+      max-width: 720px; margin-left: auto; margin-right: auto;
+    }
+    .landing-content h1 { font-size: 2.8rem; }
+    .landing-content p { font-size: 1.05rem; max-width: 420px; }
+    .btn { padding: 18px 36px; font-size: 1.05rem; }
+    .restaurant-card { padding: 16px; }
+    .restaurant-card-img { width: 88px; height: 88px; }
+  }
+
+  /* ===== RESPONSIVE: VERTICAL / NARROW MOBILE (<=640px) ===== */
+  @media (max-width: 640px) {
+    .widget-container { max-width: 480px; }
+    .step { min-height: 100dvh; }
+  }
+
+  @media (max-width: 520px) {
+    .landing-image-wrapper { height: 35vh; }
+    .landing-content h1 { font-size: 1.7rem; }
+    .landing-content { padding: 16px 20px 24px; gap: 12px; justify-content: flex-start; }
+
+    /* Mobile touch targets */
+    .btn { padding: 16px 24px; min-height: 52px; font-size: 1rem; }
+    .form-group input, .form-group select, .form-group textarea {
+      padding: 14px 16px; font-size: 1rem; min-height: 50px;
+    }
+    .phone-row select { min-height: 50px; }
+    .event-card { padding: 14px 10px; min-height: 80px; }
+    .restaurant-card { padding: 12px; min-height: 80px; }
+
+    /* Seat map mobile optimization */
+    .floor-plan-wrapper { touch-action: manipulation; }
+    .seat-map-legend { gap: 8px; margin-bottom: 10px; }
+    .legend-item { font-size: 0.68rem; }
+    .selected-info { padding: 10px 14px; font-size: 0.82rem; }
+  }
+
+  @media (max-width: 380px) {
+    .landing-image-wrapper { height: 32vh; }
+    .landing-content h1 { font-size: 1.4rem; }
+    .landing-content p { font-size: 0.88rem; }
+    .event-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .event-card { padding: 12px 8px; min-height: 70px; }
+    .form-row { grid-template-columns: 1fr; }
+    .step { padding: 14px; }
+    .step-header h2 { font-size: 1.3rem; }
+    .btn { font-size: 0.95rem; padding: 14px 20px; }
+    .phone-row select { width: 95px; font-size: 0.8rem; }
+    .condition-text h4 { font-size: 0.85rem; }
+    .condition-text p { font-size: 0.75rem; }
+  }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--card-light); border-radius: 4px; }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  .animate-up { animation: fadeUp 0.5s ease forwards; }
+  .delay-1 { animation-delay: 0.1s; opacity: 0; }
+  .delay-2 { animation-delay: 0.2s; opacity: 0; }
+  .delay-3 { animation-delay: 0.3s; opacity: 0; }
+</style>
+</head>
+<body>
+
+<div class="widget-container" id="widget">
+
+  <!-- ==================== STEP 1: LANDING ==================== -->
+  <div class="step landing active" id="step1">
+    <div class="landing-image-wrapper">
+      <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&q=80" alt="Restaurante"
+           onerror="this.parentElement.style.background='linear-gradient(135deg, #1a1a2e, #252542)'; this.style.display='none';">
+      <div class="landing-overlay"></div>
+    </div>
+    <div class="landing-content">
+      <h1 class="animate-up">Vive una experiencia <span>inolvidable</span></h1>
+      <p class="animate-up delay-1">Reserva tu mesa y asegura tu lugar en nuestro restaurante. Selecciona tu asiento favorito.</p>
+      <button class="btn btn-primary btn-full animate-up delay-2" onclick="goToStep(2)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20"/></svg>
+        Reserva Aqui
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== STEP 2: SELECT RESTAURANT ==================== -->
+  <div class="step" id="step2">
+    <div class="progress-bar" id="pb2"></div>
+    <button class="btn-back" onclick="goToStep(1)">&#8592; Volver</button>
+    <div class="step-header">
+      <h2>Elige tu Sede</h2>
+      <p>Selecciona la sede donde deseas reservar</p>
+    </div>
+
+    <div class="restaurant-cards" id="restaurantCards">
+      <div class="restaurant-card" data-restaurant="norte" onclick="selectRestaurant(this)">
+        <img class="restaurant-card-img" src="https://images.unsplash.com/photo-1552566626-52f8b828add9?w=200&q=80" alt="Sede Norte"
+             onerror="this.style.background='var(--card-light)'">
+        <div class="restaurant-card-info">
+          <h3>Sede Norte</h3>
+          <p>Ambiente elegante con terraza panoramica y zona VIP exclusiva.</p>
+          <span class="address">📍 Calle 116 #15-20</span>
+        </div>
+        <div class="restaurant-card-check">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+        </div>
+      </div>
+
+      <div class="restaurant-card" data-restaurant="centro" onclick="selectRestaurant(this)">
+        <img class="restaurant-card-img" src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&q=80" alt="Sede Centro"
+             onerror="this.style.background='var(--card-light)'">
+        <div class="restaurant-card-info">
+          <h3>Sede Centro</h3>
+          <p>Cocina de autor en el corazon de la ciudad. Ideal para negocios.</p>
+          <span class="address">📍 Carrera 7 #45-10</span>
+        </div>
+        <div class="restaurant-card-check">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+        </div>
+      </div>
+
+      <div class="restaurant-card" data-restaurant="sur" onclick="selectRestaurant(this)">
+        <img class="restaurant-card-img" src="https://images.unsplash.com/photo-1466978913421-dad2ebd01d17?w=200&q=80" alt="Sede Sur"
+             onerror="this.style.background='var(--card-light)'">
+        <div class="restaurant-card-info">
+          <h3>Sede Sur</h3>
+          <p>Espacio familiar con jardin interior y area de juegos.</p>
+          <span class="address">📍 Autopista Sur #68-30</span>
+        </div>
+        <div class="restaurant-card-check">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary btn-full disabled" id="restaurantBtn" onclick="validateStep2()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- ==================== STEP 3: CONTACT FORM ==================== -->
+  <div class="step" id="step3">
+    <div class="progress-bar" id="pb3"></div>
+    <button class="btn-back" onclick="goToStep(2)">&#8592; Volver</button>
+    <div class="step-header">
+      <h2>Datos de Contacto</h2>
+      <p>Necesitamos algunos datos para confirmar tu reserva</p>
+    </div>
+    <div class="form-group">
+      <label>Nombre completo</label>
+      <input type="text" id="fullName" placeholder="Ej: Juan Perez">
+      <span class="form-error">Este campo es obligatorio</span>
+    </div>
+    <div class="form-group">
+      <label>Correo electronico</label>
+      <input type="email" id="email" placeholder="correo@ejemplo.com">
+      <span class="form-error">Ingresa un correo valido</span>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Telefono</label>
+        <div class="phone-row">
+          <select id="countryCode">
+            <option value="+57">🇨🇴 +57</option>
+            <option value="+1">🇺🇸 +1</option>
+            <option value="+52">🇲🇽 +52</option>
+            <option value="+34">🇪🇸 +34</option>
+            <option value="+54">🇦🇷 +54</option>
+            <option value="+56">🇨🇱 +56</option>
+            <option value="+51">🇵🇪 +51</option>
+            <option value="+593">🇪🇨 +593</option>
+            <option value="+58">🇻🇪 +58</option>
+            <option value="+55">🇧🇷 +55</option>
+            <option value="+507">🇵🇦 +507</option>
+            <option value="+506">🇨🇷 +506</option>
+            <option value="+44">🇬🇧 +44</option>
+            <option value="+33">🇫🇷 +33</option>
+            <option value="+49">🇩🇪 +49</option>
+          </select>
+          <input type="tel" id="phone" placeholder="300 000 0000">
+        </div>
+        <span class="form-error">Campo obligatorio</span>
+      </div>
+      <div class="form-group">
+        <label>N° de personas</label>
+        <select id="guests">
+          <option value="">Selecciona</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10+</option>
+        </select>
+        <span class="form-error">Selecciona</span>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary btn-full" onclick="validateStep3()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- ==================== STEP 4: EVENT / DATE ==================== -->
+  <div class="step" id="step4">
+    <div class="progress-bar" id="pb4"></div>
+    <button class="btn-back" onclick="goToStep(3)">&#8592; Volver</button>
+    <div class="step-header">
+      <h2>Tipo de Evento</h2>
+      <p>Selecciona el tipo de evento y la fecha</p>
+    </div>
+
+    <label style="font-size:0.8rem;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;display:block;">Tipo de evento</label>
+    <div class="event-cards" id="eventCards">
+      <div class="event-card" data-event="casual" onclick="selectEvent(this)">
+        <span class="icon">🍽️</span><span class="label">Casual</span>
+      </div>
+      <div class="event-card" data-event="romantica" onclick="selectEvent(this)">
+        <span class="icon">🕯️</span><span class="label">Romantica</span>
+      </div>
+      <div class="event-card" data-event="cumpleanos" onclick="selectEvent(this)">
+        <span class="icon">🎂</span><span class="label">Cumpleaños</span>
+      </div>
+      <div class="event-card" data-event="negocios" onclick="selectEvent(this)">
+        <span class="icon">💼</span><span class="label">Negocios</span>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Fecha</label>
+        <input type="date" id="eventDate">
+        <span class="form-error">Selecciona una fecha</span>
+      </div>
+      <div class="form-group">
+        <label>Hora</label>
+        <select id="eventTime">
+          <option value="">Selecciona</option>
+          <option>12:00 PM</option><option>12:30 PM</option>
+          <option>1:00 PM</option><option>1:30 PM</option><option>2:00 PM</option>
+          <option>6:00 PM</option><option>6:30 PM</option>
+          <option>7:00 PM</option><option>7:30 PM</option>
+          <option>8:00 PM</option><option>8:30 PM</option><option>9:00 PM</option>
+        </select>
+        <span class="form-error">Selecciona hora</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Comentarios adicionales</label>
+      <textarea id="comments" placeholder="Alergias, preferencias, peticiones especiales..."></textarea>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary btn-full" onclick="validateStep4()">Continuar</button>
+    </div>
+  </div>
+
+  <!-- ==================== STEP 5: CONDITIONS ==================== -->
+  <div class="step" id="step5">
+    <div class="progress-bar" id="pb5"></div>
+    <button class="btn-back" onclick="goToStep(4)">&#8592; Volver</button>
+    <div class="step-header">
+      <h2>Condiciones de Reserva</h2>
+      <p>Por favor revisa las siguientes condiciones</p>
+    </div>
+
+    <div class="conditions-card">
+      <div class="condition-item">
+        <div class="condition-icon">⏰</div>
+        <div class="condition-text">
+          <h4>Llega con anticipacion</h4>
+          <p>Debes presentarte al menos <strong>1 hora antes</strong> de la hora de tu reserva para garantizar tu mesa.</p>
+        </div>
+      </div>
+      <div class="condition-item">
+        <div class="condition-icon">✏️</div>
+        <div class="condition-text">
+          <h4>Edita tu reserva</h4>
+          <p>Puedes modificar tu reserva desde la seccion <strong>"Mis Reservas"</strong> hasta con <strong>12 horas de antelacion</strong>.</p>
+        </div>
+      </div>
+      <div class="condition-item">
+        <div class="condition-icon">❌</div>
+        <div class="condition-text">
+          <h4>Cancelacion</h4>
+          <p>Las cancelaciones deben realizarse con al menos <strong>24 horas de anticipacion</strong> para evitar cargos.</p>
+        </div>
+      </div>
+      <div class="condition-item">
+        <div class="condition-icon">👔</div>
+        <div class="condition-text">
+          <h4>Codigo de vestimenta</h4>
+          <p>Se recomienda vestimenta <strong>casual elegante</strong>. No se permite ingreso con ropa deportiva.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary btn-full" onclick="goToStep(6)">Acepto, seleccionar mesa</button>
+    </div>
+  </div>
+
+  <!-- ==================== STEP 6: SEAT MAP ==================== -->
+  <div class="step" id="step6">
+    <div class="progress-bar" id="pb6"></div>
+    <button class="btn-back" onclick="goToStep(5)">&#8592; Volver</button>
+    <div class="step-header">
+      <h2>Selecciona tu Mesa</h2>
+      <p>Solo mesas con exactamente <strong id="guestCountLabel">-</strong> sillas disponibles</p>
+    </div>
+
+    <div class="seat-map-legend">
+      <div class="legend-item"><div class="legend-dot available"></div> Disponible</div>
+      <div class="legend-item"><div class="legend-dot selected"></div> Seleccionada</div>
+      <div class="legend-item"><div class="legend-dot insufficient"></div> Sillas insuficientes</div>
+      <div class="legend-item"><div class="legend-dot occupied"></div> Ocupada</div>
+    </div>
+
+    <div class="seat-map-container">
+      <div class="floor-plan-wrapper">
+        <div class="floor-plan-inner">
+          <svg class="floor-plan-svg" viewBox="0 0 400 480" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(201,168,76,0.04)" stroke-width="0.5"/>
+              </pattern>
+            </defs>
+            <rect width="400" height="480" fill="url(#grid)"/>
+            <rect x="10" y="10" width="380" height="460" rx="8" fill="none" stroke="rgba(201,168,76,0.15)" stroke-width="1.5"/>
+
+            <!-- ENTRANCE -->
+            <rect x="160" y="454" width="80" height="16" rx="4" fill="rgba(201,168,76,0.08)" stroke="var(--accent)" stroke-width="1" stroke-dasharray="4,3"/>
+            <text x="200" y="466" text-anchor="middle" fill="var(--accent)" font-size="8" font-family="Inter" opacity="0.6">ENTRADA</text>
+
+            <!-- BAR AREA -->
+            <rect x="20" y="20" width="360" height="55" rx="6" fill="rgba(201,168,76,0.04)" stroke="rgba(201,168,76,0.1)" stroke-width="0.5"/>
+            <text x="200" y="41" class="zone-label" font-size="8" opacity="0.5">BARRA</text>
+
+            <!-- Table BARRA (7 stools, 4 available) -->
+            <g class="table-group" data-table="BARRA" data-total="7" data-available="4" onclick="selectTable(this)">
+              <rect x="40" y="28" width="320" height="18" rx="9" class="table-shape" fill="#1f1f36" stroke="rgba(201,168,76,0.2)" stroke-width="1"/>
+              <text x="200" y="40" class="table-label" font-size="7">BARRA</text>
+              <circle cx="80" cy="58" r="8" class="chair-dot"/>
+              <circle cx="120" cy="58" r="8" class="chair-dot occ"/>
+              <circle cx="160" cy="58" r="8" class="chair-dot"/>
+              <circle cx="200" cy="58" r="8" class="chair-dot occ"/>
+              <circle cx="240" cy="58" r="8" class="chair-dot"/>
+              <circle cx="280" cy="58" r="8" class="chair-dot"/>
+              <circle cx="320" cy="58" r="8" class="chair-dot occ"/>
+              <text x="200" y="72" class="table-seats-label">4 disponibles</text>
+            </g>
+
+            <!-- ZONE: TERRAZA -->
+            <text x="100" y="105" class="zone-label">Terraza</text>
+
+            <!-- Table T1 (4 seats, 3 available) -->
+            <g class="table-group" data-table="T1" data-total="4" data-available="3" onclick="selectTable(this)">
+              <circle cx="70" cy="140" r="22" class="table-shape" fill="#1f1f36" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+              <text x="70" y="138" class="table-label">T1</text>
+              <text x="70" y="148" class="table-seats-label">3 disp.</text>
+              <circle cx="70" cy="112" r="8" class="chair-dot"/>
+              <circle cx="98" cy="140" r="8" class="chair-dot"/>
+              <circle cx="70" cy="168" r="8" class="chair-dot occ"/>
+              <circle cx="42" cy="140" r="8" class="chair-dot"/>
+            </g>
+
+            <!-- Table T2 (4 seats, 2 available) -->
+            <g class="table-group" data-table="T2" data-total="4" data-available="2" onclick="selectTable(this)">
+              <circle cx="200" cy="140" r="22" class="table-shape" fill="#1f1f36" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+              <text x="200" y="138" class="table-label">T2</text>
+              <text x="200" y="148" class="table-seats-label">2 disp.</text>
+              <circle cx="200" cy="112" r="8" class="chair-dot occ"/>
+              <circle cx="228" cy="140" r="8" class="chair-dot occ"/>
+              <circle cx="200" cy="168" r="8" class="chair-dot"/>
+              <circle cx="172" cy="140" r="8" class="chair-dot"/>
+            </g>
+
+            <!-- Table T3 (4 seats, 4 available) -->
+            <g class="table-group" data-table="T3" data-total="4" data-available="4" onclick="selectTable(this)">
+              <circle cx="330" cy="140" r="22" class="table-shape" fill="#1f1f36" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+              <text x="330" y="138" class="table-label">T3</text>
+              <text x="330" y="148" class="table-seats-label">4 disp.</text>
+              <circle cx="330" cy="112" r="8" class="chair-dot"/>
+              <circle cx="358" cy="140" r="8" class="chair-dot"/>
+              <circle cx="330" cy="168" r="8" class="chair-dot"/>
+              <circle cx="302" cy="140" r="8" class="chair-dot"/>
+            </g>
+
+            <!-- ZONE: SALON PRINCIPAL -->
+            <text x="200" y="215" class="zone-label">Salon Principal</text>
+
+            <!-- Table M1 (6 seats, 4 available) -->
+            <g class="table-group" data-table="M1" data-total="6" data-available="4" onclick="selectTable(this)">
+              <rect x="35" y="235" width="80" height="40" rx="6" class="table-shape" fill="#1f1f36" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+              <text x="75" y="253" class="table-label">M1</text>
+              <text x="75" y="264" class="table-seats-label">4 disp.</text>
+              <circle cx="50" cy="228" r="8" class="chair-dot"/>
+              <circle cx="75" cy="228" r="8" class="chair-dot"/>
+              <circle cx="100" cy="228" r="8" class="chair-dot occ"/>
+              <circle cx="50" cy="282" r="8" class="chair-dot"/>
+              <circle cx="75" cy="282" r="8" class="chair-dot occ"/>
+              <circle cx="100" cy="282" r="8" class="chair-dot"/>
+            </g>
+
+            <!-- Table M2 (6 seats, 5 available) -->
+            <g class="table-group" data-table="M2" data-total="6" data-available="5" onclick="selectTable(this)">
+              <rect x="160" y="235" width="80" height="40" rx="6" class="table-shape" fill="#1f1f36" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+              <text x="200" y="253" class="table-label">M2</text>
+              <text x="200" y="264" class="table-seats-label">5 disp.</text>
+              <circle cx="175" cy="228" r="8" class="chair-dot"/>
+              <circle cx="200" cy="228" r="8" class="chair-dot"/>
+              <circle cx="225" cy="228" r="8" class="chair-dot"/>
+              <circle cx="175" cy="282" r="8" class="chair-dot occ"/>
+              <circle cx="200" cy="282" r="8" class="chair-dot"/>
+              <circle cx="225" cy="282" r="8" class="chair-dot"/>
+            </g>
+
+            <!-- Table M3 (4 seats, 3 available) -->
+            <g class="table-group" data-table="M3" data-total="4" data-available="3" onclick="selectTable(this)">
+              <rect x="290" y="235" width="80" height="40" rx="6" class="table-shape" fill="#1f1f36" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+              <text x="330" y="253" class="table-label">M3</text>
+              <text x="330" y="264" class="table-seats-label">3 disp.</text>
+              <circle cx="310" cy="228" r="8" class="chair-dot"/>
+              <circle cx="350" cy="228" r="8" class="chair-dot occ"/>
+              <circle cx="310" cy="282" r="8" class="chair-dot"/>
+              <circle cx="350" cy="282" r="8" class="chair-dot"/>
+            </g>
+
+            <!-- ZONE: VIP -->
+            <text x="200" y="330" class="zone-label">Zona VIP</text>
+            <rect x="30" y="340" width="340" height="95" rx="10" fill="rgba(201,168,76,0.03)" stroke="rgba(201,168,76,0.1)" stroke-width="0.5" stroke-dasharray="6,3"/>
+
+            <!-- Table V1 (6 seats, 5 available) -->
+            <g class="table-group" data-table="V1" data-total="6" data-available="5" onclick="selectTable(this)">
+              <circle cx="100" cy="388" r="28" class="table-shape" fill="#1f1f36" stroke="rgba(201,168,76,0.25)" stroke-width="1.5"/>
+              <text x="100" y="386" class="table-label">V1</text>
+              <text x="100" y="396" class="table-seats-label">5 disp.</text>
+              <circle cx="100" cy="354" r="8" class="chair-dot"/>
+              <circle cx="130" cy="370" r="8" class="chair-dot"/>
+              <circle cx="130" cy="405" r="8" class="chair-dot occ"/>
+              <circle cx="100" cy="422" r="8" class="chair-dot"/>
+              <circle cx="70" cy="405" r="8" class="chair-dot"/>
+              <circle cx="70" cy="370" r="8" class="chair-dot"/>
+            </g>
+
+            <!-- Table V2 (6 seats, 4 available) -->
+            <g class="table-group" data-table="V2" data-total="6" data-available="4" onclick="selectTable(this)">
+              <circle cx="300" cy="388" r="28" class="table-shape" fill="#1f1f36" stroke="rgba(201,168,76,0.25)" stroke-width="1.5"/>
+              <text x="300" y="386" class="table-label">V2</text>
+              <text x="300" y="396" class="table-seats-label">4 disp.</text>
+              <circle cx="300" cy="354" r="8" class="chair-dot"/>
+              <circle cx="330" cy="370" r="8" class="chair-dot occ"/>
+              <circle cx="330" cy="405" r="8" class="chair-dot"/>
+              <circle cx="300" cy="422" r="8" class="chair-dot"/>
+              <circle cx="270" cy="405" r="8" class="chair-dot"/>
+              <circle cx="270" cy="370" r="8" class="chair-dot occ"/>
+            </g>
+
+            <!-- DECORATIVE -->
+            <circle cx="200" cy="388" r="6" fill="rgba(76,175,80,0.2)" stroke="rgba(76,175,80,0.3)" stroke-width="0.5"/>
+            <text x="200" y="391" text-anchor="middle" font-size="8" fill="rgba(76,175,80,0.5)">🌿</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="selected-info">
+        <span id="selectedSeatText" style="color: var(--text-muted);">Selecciona una mesa del plano</span>
+        <span id="selectedSeatName" class="seat-name"></span>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-primary btn-full disabled" id="confirmSeatBtn" onclick="confirmSeat()">Confirmar Mesa</button>
+    </div>
+  </div>
+
+  <!-- ==================== STEP 7: SUCCESS ==================== -->
+  <div class="step success-screen" id="step7">
+    <div class="success-icon">
+      <svg viewBox="0 0 24 24"><path class="checkmark-path" d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h2>¡Reserva Confirmada!</h2>
+    <p>Tu mesa ha sido reservada exitosamente.</p>
+    <p style="font-size:0.8rem;">Te hemos enviado un correo con los detalles.</p>
+
+    <div class="reservation-code-box" style="margin-top:20px;">
+      <span class="label">Tu codigo de reserva</span>
+      <span class="code" id="reservationCode">RSV-0000</span>
+    </div>
+
+    <div class="success-details">
+      <div class="success-detail-row">
+        <span class="detail-label">Sede</span>
+        <span class="detail-value" id="summaryRestaurant">-</span>
+      </div>
+      <div class="success-detail-row">
+        <span class="detail-label">Nombre</span>
+        <span class="detail-value" id="summaryName">-</span>
+      </div>
+      <div class="success-detail-row">
+        <span class="detail-label">Evento</span>
+        <span class="detail-value" id="summaryEvent">-</span>
+      </div>
+      <div class="success-detail-row">
+        <span class="detail-label">Fecha</span>
+        <span class="detail-value" id="summaryDate">-</span>
+      </div>
+      <div class="success-detail-row">
+        <span class="detail-label">Hora</span>
+        <span class="detail-value" id="summaryTime">-</span>
+      </div>
+      <div class="success-detail-row">
+        <span class="detail-label">Personas</span>
+        <span class="detail-value" id="summaryGuests">-</span>
+      </div>
+      <div class="success-detail-row">
+        <span class="detail-label">Mesa</span>
+        <span class="detail-value" id="summarySeat">-</span>
+      </div>
+    </div>
+
+    <button class="btn btn-secondary btn-full" onclick="resetWidget()">Hacer otra reserva</button>
+  </div>
+
+</div>
+
+<script>
+  // ===== STATE =====
+  let currentStep = 1;
+  let selectedRestaurant = '';
+  let selectedEvent = '';
+  let selectedSeatId = null;
+  let reservationCode = '';
+
+  // ===== PROGRESS BAR (5 steps: 2-6) =====
+  function renderProgressBar(stepNum) {
+    // stepNum is 2-6, maps to position 1-5
+    const pos = stepNum - 1; // 1-5
+    const total = 5;
+    let html = '';
+    for (let i = 1; i <= total; i++) {
+      if (i > 1) {
+        html += '<div class="progress-line' + (i <= pos ? ' completed' : '') + '"></div>';
+      }
+      if (i < pos) html += '<div class="progress-dot completed"></div>';
+      else if (i === pos) html += '<div class="progress-dot current"></div>';
+      else html += '<div class="progress-dot"></div>';
+    }
+    const el = document.getElementById('pb' + stepNum);
+    if (el) el.innerHTML = html;
+  }
+
+  // Render all progress bars on load
+  [2,3,4,5,6].forEach(renderProgressBar);
+
+  // ===== NAVIGATION =====
+  function goToStep(step) {
+    const currentEl = document.getElementById('step' + currentStep);
+    currentEl.classList.remove('visible');
+
+    setTimeout(() => {
+      currentEl.classList.remove('active');
+      currentStep = step;
+      const nextEl = document.getElementById('step' + step);
+      nextEl.classList.add('active');
+      nextEl.scrollTop = 0;
+      window.scrollTo(0, 0);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          nextEl.classList.add('visible');
+        });
+      });
+
+      // When entering seat map, filter tables
+      if (step === 6) filterTablesByGuests();
+      // When entering success, generate code and populate
+      if (step === 7) {
+        generateCode();
+        populateSummary();
+      }
+    }, 300);
+  }
+
+  // Init first step
+  setTimeout(() => {
+    document.getElementById('step1').classList.add('visible');
+  }, 100);
+
+  // ===== RESTAURANT SELECTION =====
+  function selectRestaurant(el) {
+    document.querySelectorAll('.restaurant-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedRestaurant = el.dataset.restaurant;
+    const btn = document.getElementById('restaurantBtn');
+    btn.classList.remove('disabled');
+  }
+
+  function validateStep2() {
+    if (!selectedRestaurant) return;
+    goToStep(3);
+  }
+
+  // ===== VALIDATION =====
+  function setError(id, hasError) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const group = el.closest('.form-group');
+    if (hasError) group.classList.add('error');
+    else group.classList.remove('error');
+  }
+
+  function validateStep3() {
+    let valid = true;
+    const name = document.getElementById('fullName').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const guests = document.getElementById('guests').value;
+
+    setError('fullName', !name); if (!name) valid = false;
+    setError('email', !email || !email.includes('@')); if (!email || !email.includes('@')) valid = false;
+    setError('phone', !phone); if (!phone) valid = false;
+    setError('guests', !guests); if (!guests) valid = false;
+
+    if (valid) goToStep(4);
+  }
+
+  function validateStep4() {
+    let valid = true;
+    const date = document.getElementById('eventDate').value;
+    const time = document.getElementById('eventTime').value;
+
+    setError('eventDate', !date); if (!date) valid = false;
+    setError('eventTime', !time); if (!time) valid = false;
+
+    if (!selectedEvent) {
+      document.getElementById('eventCards').style.outline = '2px solid var(--danger)';
+      document.getElementById('eventCards').style.outlineOffset = '4px';
+      document.getElementById('eventCards').style.borderRadius = '12px';
+      valid = false;
+    }
+
+    if (valid) goToStep(5);
+  }
+
+  // ===== EVENT SELECTION =====
+  function selectEvent(el) {
+    document.querySelectorAll('.event-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedEvent = el.dataset.event;
+    document.getElementById('eventCards').style.outline = 'none';
+  }
+
+  // ===== TABLE FILTERING =====
+  function filterTablesByGuests() {
+    const guestCount = parseInt(document.getElementById('guests').value) || 1;
+    document.getElementById('guestCountLabel').textContent = guestCount;
+
+    document.querySelectorAll('.table-group').forEach(group => {
+      const available = parseInt(group.dataset.available) || 0;
+      const total = parseInt(group.dataset.total) || 0;
+      const allOccupied = available === 0;
+
+      // Remove all state classes
+      group.classList.remove('t-available', 't-occupied', 't-insufficient', 't-selected');
+
+      if (allOccupied) {
+        group.classList.add('t-occupied');
+      } else if (available !== guestCount) {
+        group.classList.add('t-insufficient');
+      } else {
+        group.classList.add('t-available');
+      }
+    });
+
+    // Reset selection
+    selectedSeatId = null;
+    document.getElementById('selectedSeatText').textContent = 'Toca una mesa verde para seleccionarla';
+    document.getElementById('selectedSeatName').textContent = '';
+    document.getElementById('confirmSeatBtn').classList.add('disabled');
+  }
+
+  // ===== TABLE SELECTION =====
+  function selectTable(el) {
+    const group = el.closest('.table-group');
+    if (!group) return;
+    if (group.classList.contains('t-occupied') || group.classList.contains('t-insufficient')) return;
+
+    // Deselect previous
+    document.querySelectorAll('.table-group.t-selected').forEach(g => {
+      g.classList.remove('t-selected');
+      g.classList.add('t-available');
+    });
+
+    // Select this one
+    group.classList.remove('t-available');
+    group.classList.add('t-selected');
+    selectedSeatId = group.dataset.table;
+
+    const avail = group.dataset.available;
+    const total = group.dataset.total;
+    document.getElementById('selectedSeatText').textContent = 'Mesa ' + selectedSeatId;
+    document.getElementById('selectedSeatName').textContent = avail + '/' + total + ' sillas';
+
+    document.getElementById('confirmSeatBtn').classList.remove('disabled');
+  }
+
+  function confirmSeat() {
+    if (!selectedSeatId) return;
+    goToStep(7);
+  }
+
+  // ===== RESERVATION CODE =====
+  function generateCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = 'RSV-';
+    for (let i = 0; i < 5; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    reservationCode = code;
+    document.getElementById('reservationCode').textContent = code;
+  }
+
+  // ===== SUMMARY =====
+  function populateSummary() {
+    const eventNames = {
+      casual: 'Casual', romantica: 'Cena Romantica',
+      cumpleanos: 'Cumpleaños', negocios: 'Reunion de Negocios'
+    };
+    const restaurantNames = {
+      norte: 'Sede Norte', centro: 'Sede Centro', sur: 'Sede Sur'
+    };
+
+    document.getElementById('summaryRestaurant').textContent = restaurantNames[selectedRestaurant] || selectedRestaurant;
+    document.getElementById('summaryName').textContent = document.getElementById('fullName').value;
+    document.getElementById('summaryEvent').textContent = eventNames[selectedEvent] || selectedEvent;
+    document.getElementById('summaryDate').textContent = document.getElementById('eventDate').value;
+    document.getElementById('summaryTime').textContent = document.getElementById('eventTime').value;
+    document.getElementById('summaryGuests').textContent = document.getElementById('guests').value;
+    document.getElementById('summarySeat').textContent = selectedSeatId;
+  }
+
+  // ===== RESET =====
+  function resetWidget() {
+    document.querySelectorAll('.form-group').forEach(g => g.classList.remove('error'));
+    document.querySelectorAll('input, textarea').forEach(i => i.value = '');
+    document.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+    document.querySelectorAll('.event-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.restaurant-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.table-group').forEach(g => {
+      g.classList.remove('t-available', 't-occupied', 't-insufficient', 't-selected');
+    });
+
+    selectedRestaurant = '';
+    selectedEvent = '';
+    selectedSeatId = null;
+    reservationCode = '';
+
+    document.getElementById('selectedSeatText').textContent = 'Selecciona una mesa del plano';
+    document.getElementById('selectedSeatName').textContent = '';
+    document.getElementById('confirmSeatBtn').classList.add('disabled');
+    document.getElementById('restaurantBtn').classList.add('disabled');
+
+    goToStep(1);
+  }
+
+  // ===== SET MIN DATE =====
+  (function() {
+    const dateInput = document.getElementById('eventDate');
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate() + 1).padStart(2, '0');
+    dateInput.setAttribute('min', yyyy + '-' + mm + '-' + dd);
+  })();
+</script>
+
+</body>
+</html>
